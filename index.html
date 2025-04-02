@@ -163,21 +163,18 @@
         let startBlock = 0;
         let endBlock = 2499;
         let web3, accounts, contract;
-        const CONTRACT_ADDRESS = "0xcceab9351ce9ac129ed3665e97cd5c997ce27e1c";
+        const CONTRACT_ADDRESS = "0x4e391Ca35dC1015Bcaedd8617ecd2d21f0a9db01";
         const CONTRACT_ABI = [
             {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
             {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"startBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"endBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"BlockBatchStored","type":"event"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"bool","name":"isWhitelisted","type":"bool"}],"name":"WhitelistUpdated","type":"event"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addToWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"blockBatches","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"},{"internalType":"uint256[2500]","name":"txCounts","type":"uint256[2500]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getAllBatchInfo","outputs":[{"internalType":"uint256[]","name":"ids","type":"uint256[]"},{"internalType":"uint256[]","name":"startBlocks","type":"uint256[]"},{"internalType":"uint256[]","name":"endBlocks","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"blockBatchRecords","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"},{"internalType":"bytes","name":"txCounts","type":"bytes"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"getBatchCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getBlockRangeById","outputs":[{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"getNextExpectedStartBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getTxCountsById","outputs":[{"internalType":"uint256[2500]","name":"txCounts","type":"uint256[2500]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"idToIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"nextId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeFromWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"_startBlock","type":"uint256"},{"internalType":"uint256[2500]","name":"_txCounts","type":"uint256[2500]"}],"name":"storeBlockBatch","outputs":[],"stateMutability":"nonpayable","type":"function"},
