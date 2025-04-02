@@ -110,19 +110,6 @@
         #error {
             color: #d32f2f;
         }
-        canvas {
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(255, 140, 0, 0.3);
-            background-color: #fff;
-            width: 100%;
-            max-width: 512px;
-            height: auto;
-            display: none;
-        }
-        .preview-container {
-            text-align: center;
-            margin-top: 20px;
-        }
         .action-buttons {
             display: flex;
             gap: 15px;
@@ -204,7 +191,6 @@
                 padding: 1px 3px;
                 font-size: 10px;
             }
-            canvas { max-width: 300px; }
             .action-btn { padding: 8px 16px; font-size: 14px; }
             .modal-content { max-width: 90%; padding: 15px; }
         }
@@ -234,12 +220,8 @@
         </thead>
         <tbody id="blockData"></tbody>
     </table>
-    <div class="preview-container">
-        <canvas id="myCanvas" width="500" height="500"></canvas>
-        <div class="action-buttons">
-            <button onclick="downloadImage()" id="downloadButton" style="display: none;" class="action-btn">Download Image</button>
-            <button id="storeBtn" class="action-btn" onclick="startStoreCountdown()" disabled>Store Data</button>
-        </div>
+    <div class="action-buttons">
+        <button id="storeBtn" class="action-btn" onclick="startStoreCountdown()" disabled>Store Data</button>
     </div>
     <div id="modal" class="modal">
         <div class="modal-content">
@@ -252,25 +234,28 @@
     <script>
         let blockData = [];
         let startBlock = 0;
-        let endBlock = 399;
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
+        let endBlock = 2499;
         let web3, accounts, contract;
-        const CONTRACT_ADDRESS = "0x45049d28c04Bb087dA80c356d28BA9BB99BE21d4";
+        const CONTRACT_ADDRESS = "0xcceab9351ce9ac129ed3665e97cd5c997ce27e1c";
         const CONTRACT_ABI = [
             {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"startBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"endBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"BlockBatchStored","type":"event"},
             {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":false,"internalType":"uint256","name":"id","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"startBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"endBlock","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"txCount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"BlockBatchStored","type":"event"},
-            {"inputs":[{"internalType":"uint256","name":"_startBlock","type":"uint256"},{"internalType":"uint256","name":"_txCount","type":"uint256"}],"name":"storeBlockBatch","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getBlockBatchById","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"},{"internalType":"uint256","name":"txCount","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getAllBatchInfo","outputs":[{"internalType":"uint256[]","name":"ids","type":"uint256[]"},{"internalType":"uint256[]","name":"startBlocks","type":"uint256[]"},{"internalType":"uint256[]","name":"endBlocks","type":"uint256[]"},{"internalType":"uint256[]","name":"txCounts","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"bool","name":"isWhitelisted","type":"bool"}],"name":"WhitelistUpdated","type":"event"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"addToWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"blockBatches","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"},{"internalType":"uint256[2500]","name":"txCounts","type":"uint256[2500]"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"getAllBatchInfo","outputs":[{"internalType":"uint256[]","name":"ids","type":"uint256[]"},{"internalType":"uint256[]","name":"startBlocks","type":"uint256[]"},{"internalType":"uint256[]","name":"endBlocks","type":"uint256[]"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"getBatchCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getBlockRangeById","outputs":[{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"}],"stateMutability":"view","type":"function"},
             {"inputs":[],"name":"getNextExpectedStartBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"blockBatches","outputs":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"startBlock","type":"uint256"},{"internalType":"uint256","name":"endBlock","type":"uint256"},{"internalType":"uint256","name":"txCount","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_id","type":"uint256"}],"name":"getTxCountsById","outputs":[{"internalType":"uint256[2500]","name":"txCounts","type":"uint256[2500]"}],"stateMutability":"view","type":"function"},
             {"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"idToIndex","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"nextId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+            {"inputs":[],"name":"nextId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+            {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeFromWhitelist","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"uint256","name":"_startBlock","type":"uint256"},{"internalType":"uint256[2500]","name":"_txCounts","type":"uint256[2500]"}],"name":"storeBlockBatch","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},
+            {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"whitelist","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
         ];
         const shibariumMainnet = {
             chainId: 109,
@@ -348,7 +333,7 @@
             if (!contract) return null;
             const nextStartBlock = await contract.methods.getNextExpectedStartBlock().call();
             startBlock = parseInt(nextStartBlock);
-            endBlock = startBlock + 399;
+            endBlock = startBlock + 2499;
             return { startBlock, endBlock };
         }
 
@@ -388,8 +373,6 @@
             const errorDiv = document.getElementById('error');
             const blockRangeDiv = document.getElementById('blockRange');
             const table = document.getElementById('blockTable');
-            const canvas = document.getElementById('myCanvas');
-            const downloadButton = document.getElementById('downloadButton');
             const storeButton = document.getElementById('storeBtn');
 
             tableBody.innerHTML = '';
@@ -397,8 +380,6 @@
             blockRangeDiv.style.display = 'none';
             loadingDiv.style.display = 'block';
             table.style.display = 'none';
-            canvas.style.display = 'none';
-            downloadButton.style.display = 'none';
             storeButton.disabled = true;
 
             const range = await findNextAvailableGroup();
@@ -423,7 +404,7 @@
 
             const hasError = blockData.some(block => block.error);
             if (hasError) {
-                errorDiv.textContent = "Unable to fetch data, possibly due to CORS restrictions or API unavailability. Check console logs.";
+                errorDiv.textContent = "Unable to fetch data, possibly due to CORS or API issues. Check console logs.";
                 errorDiv.style.display = 'block';
                 loadingDiv.style.display = 'none';
                 return;
@@ -453,63 +434,9 @@
                 tableBody.appendChild(row);
             });
 
-            generatePixelImage();
-
             loadingDiv.style.display = 'none';
             table.style.display = 'table';
-        }
-
-        function getColorForTxCount(txCount) {
-            if (txCount === 0) return '#FFFFFF';
-            else if (txCount <= 50) return '#D3D3D3';
-            else if (txCount <= 100) return '#FF6347';
-            else if (txCount <= 150) return '#FF4500';
-            else if (txCount <= 200) return '#FFFF00';
-            else if (txCount <= 250) return '#90EE90';
-            else if (txCount <= 300) return '#008000';
-            else if (txCount <= 350) return '#00CED1';
-            else if (txCount <= 400) return '#0000FF';
-            else if (txCount <= 450) return '#800080';
-            else return '#FFD700';
-        }
-
-        function generatePixelImage() {
-            const errorDiv = document.getElementById('error');
-            const canvas = document.getElementById('myCanvas');
-            const downloadButton = document.getElementById('downloadButton');
-            const storeButton = document.getElementById('storeBtn');
-
-            if (blockData.length !== 400) {
-                errorDiv.textContent = "Please query 400 blocks of data first!";
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const transactionCounts = blockData.map(block => block.txCount);
-            const blockSize = 25;
-
-            for (let i = 0; i < 400; i++) {
-                const row = Math.floor(i / 20);
-                const col = i % 20;
-                const x = col * blockSize;
-                const y = row * blockSize;
-                const txCount = transactionCounts[i];
-                ctx.fillStyle = getColorForTxCount(txCount);
-                ctx.fillRect(x, y, blockSize, blockSize);
-            }
-
-            canvas.style.display = 'block';
-            downloadButton.style.display = 'inline-block';
             storeButton.disabled = false;
-        }
-
-        function downloadImage() {
-            const link = document.createElement('a');
-            link.download = 'shibmap_pixel_image.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
         }
 
         function startStoreCountdown() {
@@ -537,9 +464,13 @@
             const storeButton = document.getElementById('storeBtn');
 
             try {
-                const totalTxCount = blockData.reduce((sum, block) => sum + block.txCount, 0);
+                if (blockData.length !== 2500) {
+                    throw new Error("Please query exactly 2500 blocks of data!");
+                }
+
+                const txCounts = blockData.map(block => block.txCount);
                 showModal('Storing data on Shibarium... Please confirm in your wallet');
-                await contract.methods.storeBlockBatch(startBlock, totalTxCount).send({ from: accounts[0] });
+                await contract.methods.storeBlockBatch(startBlock, txCounts).send({ from: accounts[0] });
                 showModal('Data stored successfully!');
                 storeButton.classList.remove('loading');
                 storeButton.disabled = false;
