@@ -351,19 +351,30 @@
             blockRangeDiv.textContent = `Block range to store: ${startBlock} to ${endBlock}`;
             blockRangeDiv.style.display = 'block';
 
-            const promises = [];
-            for (let i = startBlock; i <= endBlock; i++) {
-                promises.push(fetchBlockData(i));
-            }
+            blockData = [];
+            const batchSize = 500;
+            for (let batch = 0; batch < 5; batch++) {
+                const batchStart = startBlock + batch * batchSize;
+                const batchEnd = Math.min(batchStart + batchSize - 1, endBlock);
+                const promises = [];
 
-            blockData = await Promise.all(promises);
+                for (let i = batchStart; i <= batchEnd; i++) {
+                    promises.push(fetchBlockData(i));
+                }
 
-            const hasError = blockData.some(block => block.error);
-            if (hasError) {
-                errorDiv.textContent = "Unable to fetch data, possibly due to CORS or API issues. Check console logs.";
-                errorDiv.style.display = 'block';
-                loadingDiv.style.display = 'none';
-                return;
+                const batchData = await Promise.all(promises);
+                blockData = blockData.concat(batchData);
+
+                const hasError = batchData.some(block => block.error);
+                if (hasError) {
+                    errorDiv.textContent = `Failed to fetch batch ${batch + 1} of 5. Check console logs for details.`;
+                    errorDiv.style.display = 'block';
+                    loadingDiv.style.display = 'none';
+                    return;
+                }
+
+                // Update loading prompt
+                loadingDiv.textContent = `Loading data... (${(batch + 1) * batchSize} / 2500 blocks fetched)`;
             }
 
             blockData.forEach(block => {
