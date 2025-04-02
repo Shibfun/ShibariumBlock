@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shibarium Block</title>
+    <title>ShibariumBlock</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -75,31 +75,6 @@
         }
         tr:hover {
             background-color: #444;
-        }
-        .block-hash-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-        .block-hash {
-            display: inline-block;
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .copy-btn {
-            padding: 2px 5px;
-            font-size: 12px;
-            background: #ff8c00;
-            color: #1a1a1a;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .copy-btn:hover {
-            background: #e07b00;
         }
         #loading, #error, #blockRange {
             text-align: center;
@@ -184,13 +159,6 @@
                 font-size: 12px; 
                 min-width: 80px;
             }
-            .block-hash {
-                max-width: 80px;
-            }
-            .copy-btn {
-                padding: 1px 3px;
-                font-size: 10px;
-            }
             .action-btn { padding: 8px 16px; font-size: 14px; }
             .modal-content { max-width: 90%; padding: 15px; }
         }
@@ -198,7 +166,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>Shibarium Block</h1>
+        <h1>ShibariumBlock</h1>
         <div class="wallet-info">
             Wallet: <span id="walletAddress">Not connected</span>
         </div>
@@ -214,7 +182,6 @@
         <thead>
             <tr>
                 <th>Block Number</th>
-                <th>Block Hash</th>
                 <th>Transaction Count</th>
             </tr>
         </thead>
@@ -272,14 +239,6 @@
 
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showModal('Hash copied to clipboard!');
-            }).catch(err => {
-                showModal('Failed to copy hash: ' + err);
-            });
         }
 
         async function connectWallet() {
@@ -346,13 +305,11 @@
                     const txCount = Math.min(block.transaction_count, 500);
                     return {
                         blockNumber: block.height,
-                        blockHash: block.hash,
                         txCount: txCount
                     };
                 } else {
                     return {
                         blockNumber: blockNumber,
-                        blockHash: "Not found",
                         txCount: 0
                     };
                 }
@@ -360,7 +317,6 @@
                 console.error(`Failed to fetch block ${blockNumber}:`, error);
                 return {
                     blockNumber: blockNumber,
-                    blockHash: "Error",
                     txCount: 0,
                     error: error.message
                 };
@@ -410,25 +366,10 @@
                 return;
             }
 
-            const allNotFound = blockData.every(block => block.blockHash === "Not found");
-            if (allNotFound) {
-                errorDiv.textContent = `No data found for blocks ${startBlock} to ${endBlock}.`;
-                errorDiv.style.display = 'block';
-                loadingDiv.style.display = 'none';
-                return;
-            }
-
             blockData.forEach(block => {
                 const row = document.createElement('tr');
-                const shortHash = block.blockHash.length > 10 ? `${block.blockHash.slice(0, 6)}...${block.blockHash.slice(-4)}` : block.blockHash;
                 row.innerHTML = `
                     <td>${block.blockNumber}</td>
-                    <td>
-                        <div class="block-hash-container">
-                            <span class="block-hash" title="${block.blockHash}">${shortHash}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${block.blockHash}')">Copy</button>
-                        </div>
-                    </td>
                     <td>${block.txCount}</td>
                 `;
                 tableBody.appendChild(row);
@@ -474,7 +415,7 @@
                 showModal('Data stored successfully!');
                 storeButton.classList.remove('loading');
                 storeButton.disabled = false;
-                loadBlocks(); // 刷新数据以获取下一个可用范围
+                loadBlocks();
             } catch (error) {
                 showModal('Failed to store data: ' + error.message);
                 storeButton.classList.remove('loading');
