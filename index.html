@@ -54,32 +54,11 @@
             opacity: 0.7;
             pointer-events: none;
         }
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background-color: #333;
-            box-shadow: 0 0 10px rgba(255, 140, 0, 0.2);
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-            border: 1px solid #ff8c00;
-        }
-        th {
-            background: linear-gradient(45deg, #ff8c00, #e07b00);
-            color: #1a1a1a;
-        }
-        tr:nth-child(even) {
-            background-color: #2d2d2d;
-        }
-        tr:hover {
-            background-color: #444;
-        }
         #loading, #error, #blockRange {
             text-align: center;
             font-size: 18px;
             color: #ff8c00;
+            margin: 20px 0;
             display: none;
         }
         #error {
@@ -149,16 +128,6 @@
             h1 { font-size: 32px; }
             .input-container { flex-wrap: wrap; gap: 8px; }
             button { padding: 3px 8px; font-size: 12px; }
-            table { 
-                width: 100%; 
-                display: block;
-                overflow-x: auto;
-            }
-            th, td { 
-                padding: 8px; 
-                font-size: 12px; 
-                min-width: 80px;
-            }
             .action-btn { padding: 8px 16px; font-size: 14px; }
             .modal-content { max-width: 90%; padding: 15px; }
         }
@@ -178,15 +147,6 @@
     <div id="blockRange"></div>
     <div id="loading">Loading data...</div>
     <div id="error"></div>
-    <table id="blockTable" style="display: none;">
-        <thead>
-            <tr>
-                <th>Block Number</th>
-                <th>Transaction Count</th>
-            </tr>
-        </thead>
-        <tbody id="blockData"></tbody>
-    </table>
     <div class="action-buttons">
         <button id="storeBtn" class="action-btn" onclick="startStoreCountdown()" disabled>Store Data</button>
     </div>
@@ -302,40 +262,29 @@
                 const data = await response.json();
                 if (data.items && data.items.length > 0) {
                     const block = data.items[0];
-                    const txCount = Math.min(block.transaction_count, 500);
-                    return {
-                        blockNumber: block.height,
-                        txCount: txCount
-                    };
+                    return Math.min(block.transaction_count, 500);
                 } else {
-                    return {
-                        blockNumber: blockNumber,
-                        txCount: 0
-                    };
+                    return 0;
                 }
             } catch (error) {
                 console.error(`Failed to fetch block ${blockNumber}:`, error);
-                return {
-                    blockNumber: blockNumber,
-                    txCount: 0,
-                    error: error.message
-                };
+                return { error: error.message };
             }
         }
 
+        async function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
         async function loadBlocks() {
-            const tableBody = document.getElementById('blockData');
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const blockRangeDiv = document.getElementById('blockRange');
-            const table = document.getElementById('blockTable');
             const storeButton = document.getElementById('storeBtn');
 
-            tableBody.innerHTML = '';
             errorDiv.style.display = 'none';
             blockRangeDiv.style.display = 'none';
             loadingDiv.style.display = 'block';
-            table.style.display = 'none';
             storeButton.disabled = true;
 
             const range = await findNextAvailableGroup();
@@ -348,7 +297,7 @@
 
             startBlock = range.startBlock;
             endBlock = range.endBlock;
-            blockRangeDiv.textContent = `Block range to store: ${startBlock} to ${endBlock}`;
+            blockRangeDiv.textContent = `Block range: ${startBlock} to ${endBlock}`;
             blockRangeDiv.style.display = 'block';
 
             blockData = [];
@@ -363,9 +312,7 @@
                 }
 
                 const batchData = await Promise.all(promises);
-                blockData = blockData.concat(batchData);
-
-                const hasError = batchData.some(block => block.error);
+                const hasError = batchData.some(data => data.error);
                 if (hasError) {
                     errorDiv.textContent = `Failed to fetch batch ${batch + 1} of 5. Check console logs for details.`;
                     errorDiv.style.display = 'block';
@@ -373,21 +320,13 @@
                     return;
                 }
 
-                // Update loading prompt
-                loadingDiv.textContent = `Loading data... (${(batch + 1) * batchSize} / 2500 blocks fetched)`;
+                blockData = blockData.concat(batchData);
+                loadingDiv.textContent = `Fetching batch ${batch + 1}/5...`;
+                await delay(1000);
             }
 
-            blockData.forEach(block => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${block.blockNumber}</td>
-                    <td>${block.txCount}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
             loadingDiv.style.display = 'none';
-            table.style.display = 'table';
+            blockRangeDiv.textContent = `Block range: ${startBlock} to ${endBlock}, Data fetched successfully`;
             storeButton.disabled = false;
         }
 
@@ -420,9 +359,8 @@
                     throw new Error("Please query exactly 2500 blocks of data!");
                 }
 
-                const txCounts = blockData.map(block => block.txCount);
                 showModal('Storing data on Shibarium... Please confirm in your wallet');
-                await contract.methods.storeBlockBatch(startBlock, txCounts).send({ from: accounts[0] });
+                await contract.methods.storeBlockBatch(startBlock, blockData).send({ from: accounts[0] });
                 showModal('Data stored successfully!');
                 storeButton.classList.remove('loading');
                 storeButton.disabled = false;
